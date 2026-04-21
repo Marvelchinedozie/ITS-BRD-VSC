@@ -34,7 +34,7 @@ main
     MOV     R1, #0x02           ; load mask 0b0010
     MOV     R2, #0x40           ; load mask 0b0100
     MOV     R3, #0x80           ; load mask 0b1000
-	ADD		R4, R0,R1
+	ADD		R4, R0,R1           ; add R0 and R1
 
     ; Set LED
     ;STRB    R2, [R6]    ; switch on LED D14
@@ -45,7 +45,7 @@ main
     ;STRB    R1, [R6]    ; switch on LED D09
     ;STRB    R2, [R7]    ; switch off LED D14
     ;STRB    R3, [R7]    ; switch off LED D15
-	STRB	R4, [R6] 	; add the summ of R1 and R2
+	STRB	R4, [R6] 	; switch on the LED D08 and D09
     b .
     
     ALIGN
