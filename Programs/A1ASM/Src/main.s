@@ -26,7 +26,7 @@ GPIO_D_CLR          equ (GPIOD_BASE + 0x1A)
     AREA  |.text|, CODE, READONLY, ALIGN = 3
     ALIGN
 main
-    BL initITSboard             ; needed by the board to setup
+    BL initITSboard             ; needed by the board to setup ruft die Setup funktion
     nop                         ; no operation
     LDR     R6, =GPIO_D_SET     ; get address of the GPIO data set register
     LDR     R7, =GPIO_D_CLR     ; get address of the GPIO data clear register
