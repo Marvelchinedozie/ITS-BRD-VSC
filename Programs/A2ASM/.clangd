@@ -1,0 +1,5 @@
+CompileFlags:
+  CompilationDatabase: /Users/dasmarvels/HAW/GT/ITS_Board/Programs/A2ASM/out/A2ASM/ITSboard_Assembly/Debug
+  Add:
+    - -include
+    - /Users/dasmarvels/HAW/GT/ITS_Board/Programs/A2ASM/out/A2ASM/ITSboard_Assembly/Debug/compile_macros.h
