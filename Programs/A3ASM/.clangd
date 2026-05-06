@@ -1,0 +1,5 @@
+CompileFlags:
+  CompilationDatabase: /Users/dasmarvels/HAW/GT/ITS/Programs/A3ASM/out/A3ASM/ITSboard_Assembly/Debug
+  Add:
+    - -include
+    - /Users/dasmarvels/HAW/GT/ITS/Programs/A3ASM/out/A3ASM/ITSboard_Assembly/Debug/compile_macros.h
