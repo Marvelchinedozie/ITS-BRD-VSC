@@ -1,0 +1,5 @@
+CompileFlags:
+  CompilationDatabase: /Users/dasmarvels/HAW/GT/ITS/Programs/PrimzahlSiebASM/out/PrimzahlSiebASM/ITSboard_Assembly/Debug
+  Add:
+    - -include
+    - /Users/dasmarvels/HAW/GT/ITS/Programs/PrimzahlSiebASM/out/PrimzahlSiebASM/ITSboard_Assembly/Debug/compile_macros.h
