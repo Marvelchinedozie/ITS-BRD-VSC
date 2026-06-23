@@ -115,22 +115,22 @@ main	PROC
 		
 
 ;================================= Initialisierung LETZTER_TIMER ==============================
-		LDR     R0, =TIMER
-		LDR     R1, [R0]
+LDR R0, =TIMER          ; Adresse von TIMER laden
+LDR R1, [R0]            ; aktuellen Timerwert lesen
 
-		LDR     R0, =LETZTER_TIMER
-		STR     R1, [R0]
+LDR R0, =LETZTER_TIMER  ; Adresse von LETZTER_TIMER laden
+STR R1, [R0]            ; aktuellen Timerwert dort speichern
 
 
 
 ;****************************************************************************************
 ; Ihre Initialisierung ============================== Hier fangt es an
 ;****************************************************************************************
-	LDR     R1, =ZUSTAND			;Zustand Adresse wird in R1 geladen
+	LDR     R1, =ZUSTAND			; Zustand Adresse wird in R1 geladen
 	MOV     R0, #ZUSTAND_INIT		; Kopiere den Wert der Konstante in R0
 	STRB    R0, [R1]				; Speichere den wert von R0 in R1
 	BL 		MY_TEXT_AUSGEBEN
-	;BL 		DISPLAY_NULL
+	BL 		DISPLAY_NULL
 
 
 
@@ -153,28 +153,18 @@ superloop
 		
 
         CMP     R0, #ZUSTAND_INIT
-        BEQ     call_init
+        BLEQ     INIT
 
         CMP     R0, #ZUSTAND_RUNNING
-        BEQ     call_running
+        BLEQ     RUNNING
 
         CMP     R0, #ZUSTAND_HOLD
-        BEQ     call_hold
+        BLEQ     HOLD
 
         B       superloop
 
 
-call_init
-        BL      INIT
-        B       superloop
 
-call_running
-        BL      RUNNING
-        B       superloop
-
-call_hold
-        BL      HOLD
-        B       superloop
 
 
 
@@ -190,16 +180,13 @@ INIT PROC
 		LDR 	R0,=GPIO_D_CLR
 		MOV 	R1, #3
 		STRH 	R1, [R0]
-		
 
-
-	;==================================================================
+	;================== INIT AUF NULL SETZEN =======================	
 		LDR     R0, =STOPPUHR_ZEIT
-        MOV     R1, #0
-        STR     R1, [R0]
+		MOV     R1, #0
+		STR     R1, [R0]
 
-	;==========Display auf "00:00.0" setzen ==========================
-		BL DISPLAY_NULL
+	
 
 	;================Tasterwert laden ================================
 		;TASTER wurde vorher in der superloop gespeichert
@@ -208,23 +195,25 @@ INIT PROC
 
 
     ;========== Pruefen, ob S7 gedrueckt ist ==========================
+
         ; S7 liegt auf Bit 7 = 0x80
         ; Taster sind active-low:
         ; 0 = gedrueckt
         ; 1 = nicht gedrueckt
+IF_INIT
         AND     R1, R1, #0x80
         CMP     R1, #0
 
         ; Wenn S7 nicht gedrueckt ist, INIT verlassen
-        BNE     init_ende
-
+        BNE     END_IF_INIT
+THEN_INIT
 		;========== Wenn S7 gedrueckt wurde ==============================
         ; Zustand auf RUNNING setzen
         LDR     R0, =ZUSTAND
         MOV     R1, #ZUSTAND_RUNNING
         STRB    R1, [R0]
 		BL      ZUSTAND_AUSGABEN
-init_ende
+END_IF_INIT
 
 		POP{PC}
 		ENDP
@@ -253,14 +242,37 @@ RUNNING PROC
         LDRH    R1, [R0]
 
 ;==================================== S6 pruefen: Wechsel zu HOLD ==============
+IF_HOLD_01
         AND     R2, R1, #0x40
         CMP     R2, #0
-        BEQ     running_to_hold
+		BNE 	END_IF_HOLD_01
+
+THEN_HOLD_01
+
+        LDR     R0, =ZUSTAND
+        MOV     R1, #ZUSTAND_HOLD
+        STRB    R1, [R0]
+		BL      ZUSTAND_AUSGABEN
+        B       running_ende
+END_IF_HOLD_01
 
 ;=====================================  S5 pruefen: Reset zu INIT ================
+IF_INIT_01
         AND     R2, R1, #0x20
         CMP     R2, #0
-        BEQ     running_to_init
+		BNE		END_IF_INIT_01
+
+THEN_INIT_01
+        LDR     R0, =ZUSTAND
+        MOV     R1, #ZUSTAND_INIT
+        STRB    R1, [R0]
+
+		BL 		DISPLAY_NULL
+		BL      ZUSTAND_AUSGABEN
+		B		running_ende
+
+END_IF_INIT_01
+        
 
 ;===================================== Zeit hochzaehlen =========================
         LDR     R0, =STOPPUHR_ZEIT
@@ -279,19 +291,6 @@ RUNNING PROC
         B       running_ende
 
 
-running_to_hold
-        LDR     R0, =ZUSTAND
-        MOV     R1, #ZUSTAND_HOLD
-        STRB    R1, [R0]
-		BL      ZUSTAND_AUSGABEN
-        B       running_ende
-
-
-running_to_init
-        LDR     R0, =ZUSTAND
-        MOV     R1, #ZUSTAND_INIT
-        STRB    R1, [R0]
-		BL      ZUSTAND_AUSGABEN
 
 
 running_ende
@@ -324,42 +323,45 @@ HOLD    PROC
         LDRH    R1, [R0]
 
 ;===================================== S7 pruefen: zurueck zu RUNNING ================
+IF_RUNNING_02
         AND     R2, R1, #0x80
         CMP     R2, #0
-        BEQ     hold_to_running
+		BNE		END_IF_RUNNING_02
 
-;==================================== S5 pruefen: RESET zu INIT ========================
-        AND     R2, R1, #0x20
-        CMP     R2, #0
-        BEQ     hold_to_init
-
-;==================== Zeit im Hintergrund weiterzaehlen ================================   
-        LDR     R0, =STOPPUHR_ZEIT
-        LDR     R1, [R0]
-
-        LDR     R2, =DELTA_ZEIT
-        LDR     R2, [R2]
-
-        ADD     R1, R1, R2
-        STR     R1, [R0]
-
-        B       hold_ende
-		
-
-
-hold_to_running
-        LDR     R0, =ZUSTAND
+THEN_RUNNING_02
+		LDR     R0, =ZUSTAND
         MOV     R1, #ZUSTAND_RUNNING
         STRB    R1, [R0]
 		BL      ZUSTAND_AUSGABEN
         B       hold_ende
 
+END_IF_RUNNING_02
 
-hold_to_init
-        LDR     R0, =ZUSTAND
+;==================================== S5 pruefen: RESET zu INIT ========================
+IF_INIT_02
+        AND     R2, R1, #0x20
+        CMP     R2, #0
+		BNE 	END_IF_INIT_02
+
+THEN_INIT_02
+		LDR     R0, =ZUSTAND
         MOV     R1, #ZUSTAND_INIT
         STRB    R1, [R0]
+
+		BL 		DISPLAY_NULL
 		BL      ZUSTAND_AUSGABEN
+END_IF_INIT_02
+;==================== Zeit im Hintergrund weiterzaehlen ================================   
+        LDR     R0, =STOPPUHR_ZEIT
+        LDR     R1, [R0]
+
+        LDR     R2, =DELTA_ZEIT
+        LDR     R2, [R2] 			;Lese die vergangene Zeit seit dem letzten Schleifendurchlauf.
+
+        ADD     R1, R1, R2
+        STR     R1, [R0]
+
+        B       hold_ende
 
 
 hold_ende
@@ -394,33 +396,36 @@ ZUSTAND_AUSGABEN PROC
 
         LDR     R1, =ZUSTAND
         LDRB    R1, [R1]
-
+IF_03
         CMP     R1, #ZUSTAND_INIT
-        BEQ     print_init
+        BNE		ELSE_031
+		BEQ 	THEN_031
+THEN_031   
+		LDR     R0, =STATE_INIT_TEXT
+        BL      lcdPrintS
 
+ELSE_031
         CMP     R1, #ZUSTAND_RUNNING
-        BEQ     print_running
+        BNE		ELSE_032
+		BEQ 	THEN_032
 
+THEN_032
+		LDR     R0, =STATE_RUNNING_TEXT
+        BL      lcdPrintS
+        
+
+ELSE_032
         CMP     R1, #ZUSTAND_HOLD
-        BEQ     print_hold
+        BNE		ENDIF_03
+		BEQ 	THEN_033
 
-        B       zustand_ende
-
-
-print_init
-        LDR     R0, =STATE_INIT_TEXT
-        BL      lcdPrintS
-        B       zustand_ende
-
-print_running
-        LDR     R0, =STATE_RUNNING_TEXT
-        BL      lcdPrintS
-        B       zustand_ende
-
-print_hold
-        LDR     R0, =STATE_HOLD_TEXT
+THEN_033
+		LDR     R0, =STATE_HOLD_TEXT
         BL      lcdPrintS
 
+ENDIF_03
+        B       zustand_ende
+        
 
 zustand_ende
         POP     {PC}
