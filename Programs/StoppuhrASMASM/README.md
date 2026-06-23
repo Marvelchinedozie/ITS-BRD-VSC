@@ -194,6 +194,7 @@ Daraus ergeben sich:
 
 Das Unterprogramm UPDATECLK berechnet die Zeitdifferenz zwischen zwei Schleifendurchläufen.
 
+Die Stoppuhr zählt nicht selbst die Zeit. Sie misst, wie viel Zeit seit dem letzten Schleifendurchlauf vergangen ist.
 Berechnung:
 
 ```text
@@ -210,6 +211,10 @@ DELTA_ZEIT
 ```
 
 gespeichert.
+
+Zum Beispiel: 
+DELTA_ZEIT = 100000 - 99000
+DELTA_ZEIT = 1000 (10msd)
 
 ---
 
